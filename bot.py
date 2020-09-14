@@ -207,6 +207,19 @@ class AvatarBot:
         tempfile = NamedTemporaryFile(suffix=".mp4")
         tempfile.write(video_buffer)
 
+        width, height = subprocess.check_output(shlex.split(
+            f"ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 {tempfile.name}"
+        )).decode().split("x")
+        width, height = map(int, (width, height))
+
+        if max(width, height) > 1280:
+            scaled_tempfile = NamedTemporaryFile(suffix=".mp4")
+            subprocess.check_call(shlex.split(
+                f"ffmpeg -y -i {tempfile.name} "
+                f"-vf scale=w=1280:h=720:force_original_aspect_ratio=decrease {scaled_tempfile.name}"
+            ))
+            tempfile = scaled_tempfile
+
         outfile = NamedTemporaryFile(suffix=".mp4")
 
         cached_filter_mode: Optional[int] = self.filter_mode_cache.get(event.chat_id)
