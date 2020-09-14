@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.idea
+*.session
+*.session-journal
+.mypy_cache
+test
