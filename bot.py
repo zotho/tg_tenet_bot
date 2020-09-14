@@ -79,6 +79,9 @@ class AvatarBot:
             f"Фильтер для видео установлен в состояние {filter_value}"
         )
         user: User = await event.get_chat()
+        logger.info(
+            f"/filter: id:{user_id} username:{user.username} first_name:{user.first_name}"
+        )
         await asyncio.sleep(5)
         await self.bot.delete_messages(user, [event.message, respond])
 
@@ -107,7 +110,7 @@ class AvatarBot:
     async def image_handler(self, event: NewMessage.Event):
         user: User = await event.get_chat()
         async with self.bot.action(user, "typing"):
-            logger.info(f"Process image: {user.id} {user.username} {user.first_name}")
+            logger.info(f"Process image: {event.chat_id} {user.username} {user.first_name}")
 
             try:
                 if event.media.document.mime_type.startswith("audio/"):
@@ -129,7 +132,7 @@ class AvatarBot:
     async def username_handler(self, event: NewMessage.Event):
         user: User = await event.get_chat()
         async with self.bot.action(user, "typing"):
-            logger.info(f"Process username: {user.id} {user.username} {user.first_name}")
+            logger.info(f"Process username: {event.chat_id} {user.username} {user.first_name}")
             target_username: str
             target_username, *_ = event.message.text.split()
 
