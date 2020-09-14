@@ -204,18 +204,17 @@ class AvatarBot:
             actual_progress_message = progress_message
             await self.bot.edit_message(user, actual_progress_message, "Обрабатываю видео")
 
-        tempfile = SpooledTemporaryFile()
+        tempfile = NamedTemporaryFile(suffix=".mp4")
         tempfile.write(video_buffer)
-        tempfile.seek(0)
 
         outfile = NamedTemporaryFile(suffix=".mp4")
 
-        cached_filter_mode = self.filter_mode_cache.get(event.chat_id)
-        actual_filter_mode = filter_type if cached_filter_mode is None else cached_filter_mode
+        cached_filter_mode: Optional[int] = self.filter_mode_cache.get(event.chat_id)
+        actual_filter_mode: int = cached_filter_mode if cached_filter_mode is not None else filter_type
         if actual_filter_mode == 0:
             command = (
                 "ffmpeg -y "
-                "-i /dev/stdin "
+                f"-i {tempfile.name} "
                 '-filter_complex "'
                 "[0:v]crop=in_w/2:in_h:in_w/2:0,reverse[u];"
                 "[0:v][u]overlay=w:eof_action=pass"
@@ -224,7 +223,7 @@ class AvatarBot:
         elif actual_filter_mode == 1:
             command = (
                 "ffmpeg -y "
-                "-i /dev/stdin "
+                f"-i {tempfile.name} "
                 '-filter_complex "'
                 "[0:v]crop=in_w/2:in_h:in_w/2:0[r];"
                 "[0:v]crop=in_w/2:in_h:0:0,reverse[l];"
@@ -235,7 +234,7 @@ class AvatarBot:
         else:
             raise NotImplemented
 
-        subprocess.check_call(shlex.split(command), stdin=tempfile)
+        subprocess.check_call(shlex.split(command))
 
         async def progress_callback(current: int, total: int):
             new_progress = f"Отправляю видео: {round(current / total * 100)}%"
